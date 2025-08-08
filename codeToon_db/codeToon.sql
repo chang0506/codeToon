@@ -1,0 +1,110 @@
+CREATE DATABASE IF NOT EXISTS `codeToon_db`
+CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+USE `codeToon_db`;
+-- DROP DATABASE codeToon_db;
+
+CREATE TABLE IF NOT EXISTS `users`(
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(255) UNIQUE,
+  nickname VARCHAR(255) NOT NULL,
+  profile_image_url VARCHAR(255) NOT NULL,
+  provider VARCHAR(255) NOT NULL CHECK (provider IN ('GOOGLE', 'KAKAO')),
+  provider_id VARCHAR(255) NOT NULL,
+  role VARCHAR(255) NOT NULL CHECK (role IN ('USER', 'ADMIN', 'AUTHOR')),
+  coins INT NOT NULL DEFAULT 0,
+
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `webtoons`(
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  summary TEXT,
+  thumbnail_url VARCHAR(255),
+  publish_day ENUM('MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN', 'ETC'),
+  status ENUM('PUBLISHING', 'COMPLETED', 'HIATUS') NOT NULL DEFAULT 'PUBLISHING',
+
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  Foreign Key (user_id) REFERENCES users(id)
+
+) CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `episodes`(
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  webtoon_id BIGINT NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  episode_number INT NOT NULL,
+  thumbnail_url VARCHAR(255),
+  is_free BOOLEAN DEFAULT true,
+  price INT NOT NULL DEFAULT 0,
+
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  Foreign Key (webtoon_id) REFERENCES webtoons(id)
+) CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `episode_images`(
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  episode_id BIGINT NOT NULL,
+  image_url VARCHAR(255),
+  image_order INT,
+
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  Foreign Key (episode_id) REFERENCES episodes(id)
+
+) CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `comments`(
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  episode_id BIGINT NOT NULL,
+  user_id BIGINT NOT NULL,
+  content TEXT NOT NULL,
+  love INT NOT NULL DEFAULT 0,
+  hate INT NOT NULL DEFAULT 0,
+
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  Foreign Key (episode_id) REFERENCES episodes(id),
+  Foreign Key (user_id) REFERENCES users(id)
+) CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `purchases`(
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  episode_id BIGINT NOT NULL,
+  user_id BIGINT NOT NULL,
+
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  Foreign Key (episode_id) REFERENCES episodes(id),
+  Foreign Key (user_id) REFERENCES users(id),
+  UNIQUE (user_id, episode_id)
+) CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `payment_histories`(
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  amount INT NOT NULL,
+  imp_uid VARCHAR(255) NOT NULL,
+  merchant_uid VARCHAR(255) NOT NULL,
+  status VARCHAR(255) NOT NULL CHECK (status IN ('COMPLETED', 'FAILED')),
+
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  Foreign Key (user_id) REFERENCES users(id)
+) CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
